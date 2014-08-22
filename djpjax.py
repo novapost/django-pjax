@@ -2,6 +2,7 @@ import functools
 
 from django.views.generic.base import TemplateResponseMixin
 
+
 def pjax(pjax_template=None):
     def pjax_decorator(view):
         @functools.wraps(view)
@@ -11,7 +12,7 @@ def pjax(pjax_template=None):
             # if not hasattr(resp, "is_rendered"):
             #     warnings.warn("@pjax used with non-template-response view")
             #     return resp
-            if request.META.get('HTTP_X_PJAX', False):
+            if request.META.get('HTTP_X_PJAX', False) and hasattr(resp, 'template_name'):
                 if pjax_template:
                     resp.template_name = pjax_template
                 else:
@@ -19,6 +20,7 @@ def pjax(pjax_template=None):
             return resp
         return _view
     return pjax_decorator
+
 
 def pjaxtend(parent='base.html', pjax_parent='pjax.html', context_var='parent'):
     def pjaxtend_decorator(view):
@@ -29,13 +31,15 @@ def pjaxtend(parent='base.html', pjax_parent='pjax.html', context_var='parent'):
             # if not hasattr(resp, "is_rendered"):
             #     warnings.warn("@pjax used with non-template-response view")
             #     return resp
-            if request.META.get('HTTP_X_PJAX', False):
-                resp.context_data[context_var] = pjax_parent
-            elif parent:
-                resp.context_data[context_var] = parent
+            if hasattr(resp, 'context_data'):
+                if request.META.get('HTTP_X_PJAX', False):
+                    resp.context_data[context_var] = pjax_parent
+                elif parent:
+                    resp.context_data[context_var] = parent
             return resp
         return _view
     return pjaxtend_decorator
+
 
 class PJAXResponseMixin(TemplateResponseMixin):
 
